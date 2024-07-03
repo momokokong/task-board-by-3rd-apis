@@ -32,22 +32,23 @@
               <h5 class="modal-title">Add task</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body mx-auto container-fluid ">
-              <form class="d-flex align-items-center justify-content-center row">
+            <div class="modal-body mx-auto container">
+              <form id="task-form" class="d-flex align-items-center justify-content-center row">
                 <div class="p-2 col-12 col-lg-6">
                   <label for="task-title">Task Title</label>
-                  <input type="text" class="form-control" id="task-title" size="25">
+                  <input type="text" class="form-input" id="task-title" name="task-title">
                 </div>
-                <div class="p2 col-12 col-lg-6">
+                <div class="p-2 col-12 col-lg-6">
                   <label for="task-due-date">Task Due Date</label>
-                  <input type="text" class="form-control" id="task-due-date" size="25">
+                  <input type="text" class="form-input" id="task-due-date" name="task-title">
                 </div>
-                <div class="p2 col-12">
+                <div class="p-2 col-12">
                   <label for="task-description">Task Description</label>
-                  <textarea type="text" class="form-control" id="task-description" rows="3"></textarea>
+                  <textarea type="text" class="form-control" id="task-description" name="task-title" rows="3"></textarea>
                 </div>
+                <small id="form-reminder" class="alert-warning my-1" role="alert"></small>
                 <div class="modal-footer d-flex justify-content-center align-items-center">
-                  <button type="button" class="btn btn-primary">Add task</button>
+                  <button type="button" class="btn btn-primary" id="task-submit">Add task</button>
                 </div>
               </form>
             </div>
@@ -61,7 +62,8 @@
             <h2 class="card-title mb-1">To Do</h2>
           </div>
           <div class="card-body bg-light">
-            <div id="todo-cards"></div>
+            <div id="todo-cards">
+            </div>
           </div>
         </div>
       </div>
