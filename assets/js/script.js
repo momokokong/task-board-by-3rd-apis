@@ -1,6 +1,6 @@
 // Retrieve tasks and nextId from localStorage
 let taskList = JSON.parse(localStorage.getItem("tasks"));
-let nextId = JSON.parse(localStorage.getItem("nextId"));
+let nextId = localStorage.getItem("nextId");
 
 const todo = "todo";
 const inProgress = "in-progress";
@@ -8,12 +8,13 @@ const done = "done";
 
 // Todo: create a function to generate a unique task id
 function generateTaskId() {
-
+  nextId++;
+  localStorage.setItem("nextId", nextId);
 }
 
 // Todo: create a function to create a task card
 function createTaskCard(task) {
-  const swimlaneEl = $("#"+task.swimlane+"-cards");
+  const kanbanEl = $("#"+task.swimlane+"-kanban");
   const dayLeft = dayjs(task.dueDate).diff(dayjs(),"day");
   let bgColor = "bg-white";
   if (dayLeft < 0){
@@ -21,9 +22,11 @@ function createTaskCard(task) {
   } else if (task.dueDate === dayjs().format("MM/DD/YYYY")) {
     bgColor = "bg-warning";
   } 
+  const liEl = $("<li>");
+  liEl.attr("id", "id-"+task.ID);
 
   const cardEl = $("<div>");
-  cardEl.attr({"class": bgColor + " rounded m-3 border ui-widget-content", "id":"task-card"});
+  cardEl.attr("class", bgColor + " rounded m-3 border ui-widget-content");
 
   const h3El = $("<h3>");
   h3El.attr("class", "card-header");
@@ -41,22 +44,30 @@ function createTaskCard(task) {
   dueDateEl.text(dayjs(task.dueDate).format("MM/DD/YYYY"));
 
   const buttonEl = $("<button>");
-  buttonEl.attr("class", "btn btn-danger btn-block my-1 border");
+  buttonEl.attr({"class": "btn btn-danger btn-block my-1 border delete", "id":"delete-id-"+task.ID});
   buttonEl.text("Delete");
 
   cardBodyEl.append(descEl, dueDateEl, buttonEl);
   cardEl.append(h3El, cardBodyEl);
-  console.log(cardEl);
-  swimlaneEl.append(cardEl);
+  liEl.append(cardEl);
+  kanbanEl.append(liEl);
 }
 
 // Todo: create a function to render the task list and make cards draggable
 function renderTaskList() {
   taskList.forEach(task => {
-    createTaskCard(task);
+    if (task !== null) createTaskCard(task);
   });
-  $("#task-card").draggable({ zIndex: 100,  snap: "#todo-cards, #in-progress-cards, #done-cards", snapMode: "inner", cancel: "#task-card.button"});
-  // containment: "#todo-cards, #in-progress-cards, #done-cards",
+  // $("#task-card").draggable({ zIndex: 100, helper: "clone", cancel: "#task-card.button"});
+  $("#todo-kanban, #in-progress-kanban, #done-kanban").sortable({
+    connectWith: ".kanban",
+    cursor: "move", 
+    helper: "clone", 
+    receive: handleDrop, 
+    cancel: ".delete"
+  });
+  //Makes sure everytime add delete listener whenever tasks are rendered
+  $("li").on("click", ".delete", handleDeleteTask);
 }
 
 // Todo: create a function to handle adding a new task
@@ -64,16 +75,17 @@ function handleAddTask(event){
   const taskTitle = $("#task-title").val().trim();
   const taskDueDate = $("#task-due-date").val().trim();
   const taskDescription = $("#task-description").val().trim();
-  console.log("Title:"+taskTitle+" Date:" +taskDueDate+" Desc.:"+taskDescription);
   if (taskTitle.length > 0 && taskDueDate.length > 0 && taskDescription.length > 0) {
     const task = {
       title: taskTitle,
       dueDate: taskDueDate,
       desc: taskDescription,
       swimlane: todo,
+      ID: nextId,
     };
     taskList.push(task);
     localStorage.setItem("tasks", JSON.stringify(taskList));
+    generateTaskId();
     $("#formModal").modal('hide');
   } else {
     $("#form-reminder").text("*You must have something, right?  Make sure each field has something.")
@@ -82,7 +94,13 @@ function handleAddTask(event){
 
 // Todo: create a function to handle deleting a task
 function handleDeleteTask(event){
-
+  const buttonID = $(event.target).attr("id");
+  const liID = buttonID.slice(buttonID.indexOf("delete-") + 7);
+  const taskID = liID.slice(liID.indexOf("-") + 1);
+  console.log(taskID);
+  $("li").remove("#"+liID);
+  taskList[taskID] = null;
+  localStorage.setItem("tasks", JSON.stringify(taskList));
 }
 
 // Todo: create a function to handle dropping a task into a new status lane
@@ -94,26 +112,28 @@ function handleDrop(event, ui) {
 $(document).ready(function () {
   if (!taskList){
     localStorage.setItem("tasks",JSON.stringify([]));
-    localStorage.setItem("nextId",JSON.stringify([]));
+    localStorage.setItem("nextId", 0);
     taskList = JSON.parse(localStorage.getItem("tasks"));
-    nextId = JSON.parse(localStorage.getItem("nextId"));
+    nextId = localStorage.getItem("nextId");
   }
   renderTaskList();
 
-  $( function() {
-    $("#task-due-date").datepicker({
-      showButtonPanel: true
-    });
+
+  $("#task-due-date").datepicker({
+    showButtonPanel: true
   });
 
-  $("#task-form").on("click", "#task-submit", handleAddTask);
 
-  // Clear everything and render the list once the modal form is closed.
+  $("#task-form").on("click", "#task-submit", handleAddTask);
+  
+
+  // Clear everything and render the list once the modal form is closed. Add listener to delete.
   $("#formModal").on("hidden.bs.modal", function() {
     $("#task-title").val("");
     $("#task-due-date").val("");
     $("#task-description").val("");
-    $("#form-reminder").text("");
+    $("#form-reminder, #todo-kanban, #in-progress-kanban, #done-kanban").text("");
     renderTaskList();
+
   });
 });
