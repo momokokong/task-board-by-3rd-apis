@@ -120,7 +120,9 @@ $(document).ready(function () {
 
 
   $("#task-due-date").datepicker({
-    showButtonPanel: true
+    showButtonPanel: true,
+    changeMonth: true,
+    changeYear: true,
   });
 
 
