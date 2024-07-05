@@ -17,11 +17,14 @@ function createTaskCard(task) {
   const kanbanEl = $("#"+task.swimlane+"-kanban");
   const dayLeft = dayjs(task.dueDate).diff(dayjs(),"day");
   let bgColor = "bg-white";
-  if (dayLeft < 0){
-    bgColor = "bg-danger";
-  } else if (task.dueDate === dayjs().format("MM/DD/YYYY")) {
-    bgColor = "bg-warning";
-  } 
+  if (task.swimlane !== done){
+    if (dayLeft < 0){
+      bgColor = "bg-danger";
+    } else if (task.dueDate === dayjs().format("MM/DD/YYYY")) {
+      bgColor = "bg-warning";
+    } 
+  }
+
   const liEl = $("<li>");
   liEl.attr("id", "id-"+task.ID);
 
@@ -55,10 +58,14 @@ function createTaskCard(task) {
 
 // Todo: create a function to render the task list and make cards draggable
 function renderTaskList() {
+  $("#task-title").val("");
+  $("#task-due-date").val("");
+  $("#task-description").val("");
+  $("#form-reminder, #todo-kanban, #in-progress-kanban, #done-kanban").text("");
+  
   taskList.forEach(task => {
     if (task !== null) createTaskCard(task);
   });
-  // $("#task-card").draggable({ zIndex: 100, helper: "clone", cancel: "#task-card.button"});
   $("#todo-kanban, #in-progress-kanban, #done-kanban").sortable({
     connectWith: ".kanban",
     cursor: "move", 
@@ -97,7 +104,6 @@ function handleDeleteTask(event){
   const buttonID = $(event.target).attr("id");
   const liID = buttonID.slice(buttonID.indexOf("delete-") + 7);
   const taskID = liID.slice(liID.indexOf("-") + 1);
-  console.log(taskID);
   $("li").remove("#"+liID);
   taskList[taskID] = null;
   localStorage.setItem("tasks", JSON.stringify(taskList));
@@ -105,7 +111,17 @@ function handleDeleteTask(event){
 
 // Todo: create a function to handle dropping a task into a new status lane
 function handleDrop(event, ui) {
-
+  console.log(event);
+  console.log(ui);
+  const taskID = $(ui.item).attr("id").slice(3);
+  console.log($(event.target).attr("id").slice(0, -7));
+  taskList[taskID].swimlane = $(event.target).attr("id").slice(0, -7);
+  localStorage.setItem("tasks", JSON.stringify(taskList));
+  renderTaskList();
+  // 1. getID
+  // 2. update the task.swimlane in tasksList[ID] = target swimlan (xxxx-kanban) 
+  // 3. save taskList
+  // 4. render
 }
 
 // Todo: when the page loads, render the task list, add event listeners, make lanes droppable, and make the due date field a date picker
@@ -131,10 +147,7 @@ $(document).ready(function () {
 
   // Clear everything and render the list once the modal form is closed. Add listener to delete.
   $("#formModal").on("hidden.bs.modal", function() {
-    $("#task-title").val("");
-    $("#task-due-date").val("");
-    $("#task-description").val("");
-    $("#form-reminder, #todo-kanban, #in-progress-kanban, #done-kanban").text("");
+
     renderTaskList();
 
   });
